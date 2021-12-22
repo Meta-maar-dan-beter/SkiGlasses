@@ -1,23 +1,25 @@
 #include <math.h>
+#include "UV-sensor.h"
 
 // Rotary Encoder Inputs
 #define CLK 0
 #define DT 2
 #define SW 14
+#define CCW 1
+#define CW -1
 
-int counter = 0;
+int counter = 50;
 int currentStateCLK;
 int lastStateCLK;
-String currentDir ="";
+int currentDir;
 unsigned long lastButtonPress = 0;
-
-int solar = 50;
+unsigned long lastSensorRead = 0;
 
 void setup() {
   
   // Set encoder pins as inputs
-  pinMode(CLK,INPUT);
-  pinMode(DT,INPUT);
+  pinMode(CLK, INPUT);
+  pinMode(DT, INPUT);
   pinMode(SW, INPUT_PULLUP);
 
   // Setup Serial Monitor
@@ -25,6 +27,9 @@ void setup() {
 
   // Read the initial state of CLK
   lastStateCLK = digitalRead(CLK);
+
+  // Init UV sensor
+  SI1145_init_sensor();
 }
 
 // calculate the opaqueness of the glass
@@ -48,23 +53,26 @@ void loop() {
     // the encoder is rotating CCW so decrement
     if (digitalRead(DT) != currentStateCLK) {
       counter --;
-      currentDir ="CCW";
+      currentDir = CCW;
     } else {
       // Encoder is rotating CW so increment
       counter ++;
-      currentDir ="CW";
+      currentDir = CW;
     }
+  }
 
-    int value = calc_shade(solar, counter);
+  if (millis() - lastSensorRead > 1000) {
+    SI1145_value solar = SI1145_read_sensor();
+    int value = calc_shade(solar.vis, counter); // use visual reading for testing, change to UV later
 
     Serial.print("Solar: ");
-    Serial.print(solar);
+    Serial.print(solar.vis);
     Serial.print(" | Counter: ");
     Serial.println(counter);
     Serial.print("Formula: ");
     Serial.println(value);
 
-    
+    lastSensorRead = millis();
   }
 
   // Remember last CLK state
