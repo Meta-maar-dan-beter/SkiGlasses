@@ -1,41 +1,41 @@
 #include "UV-sensor.h"
 
-void SI1145_setRegister(uint8_t reg, uint8_t val) {
-    TinyWireM.beginTransmission(SI1145_ADDR);
-    TinyWireM.write(reg);
-    TinyWireM.write(val);
-    TinyWireM.endTransmission();   
+void SI1145_setRegister(unsigned char reg, unsigned char val) {
+    Wire.beginTransmission(SI1145_ADDR);
+    Wire.write(reg);
+    Wire.write(val);
+    Wire.endTransmission();   
 }
 
-uint8_t SI1145_getRegister(uint8_t reg) {
-    TinyWireM.beginTransmission(SI1145_ADDR);
-    TinyWireM.write(reg);
-    TinyWireM.endTransmission();
-    TinyWireM.requestFrom(SI1145_ADDR, 1);
-    return TinyWireM.read();
+unsigned char SI1145_getRegister(unsigned char reg) {
+    Wire.beginTransmission(SI1145_ADDR);
+    Wire.write(reg);
+    Wire.endTransmission();
+    Wire.requestFrom(SI1145_ADDR, 1);
+    return Wire.read();
 }
 
-uint16_t SI1145_getRegister16(uint8_t reg) {
-    TinyWireM.beginTransmission(SI1145_ADDR);
-    TinyWireM.write(reg);
-    TinyWireM.endTransmission();
-    TinyWireM.requestFrom(SI1145_ADDR, 2);
-    return TinyWireM.read() | (TinyWireM.read() << 8);
+unsigned int SI1145_getRegister16(unsigned char reg) {
+    Wire.beginTransmission(SI1145_ADDR);
+    Wire.write(reg);
+    Wire.endTransmission();
+    Wire.requestFrom(SI1145_ADDR, 2);
+    return Wire.read() | (Wire.read() << 8);
 }
 
-void SI1145_sendCommand(uint8_t command) {
+void SI1145_sendCommand(unsigned char command) {
     SI1145_setRegister(0x18, command);
 }
 
-void SI1145_setParameter(uint8_t par, uint8_t val) {
+void SI1145_setParameter(unsigned char par, unsigned char val) {
     SI1145_setRegister(0x17, val); // PARAM_WR
     SI1145_sendCommand(0b10100000 | par); // PARAM_SET with parameter
 }
 
 int SI1145_init_sensor() {
-    TinyWireM.begin();
+    Wire.begin();
   
-    uint8_t id = SI1145_getRegister(0); // check ID, should be 0x45
+    unsigned char id = SI1145_getRegister(0); // check ID, should be 0x45
     if (id != 0x45) return -1;
 
     SI1145_sendCommand(1); // reset
