@@ -1,13 +1,13 @@
 #include "UV-sensor.h"
 
-void SI1145_setRegister(unsigned char reg, unsigned char val) {
+void SI1145_setRegister(byte reg, byte val) {
     Wire.beginTransmission(SI1145_ADDR);
     Wire.write(reg);
     Wire.write(val);
     Wire.endTransmission();   
 }
 
-unsigned char SI1145_getRegister(unsigned char reg) {
+byte SI1145_getRegister(byte reg) {
     Wire.beginTransmission(SI1145_ADDR);
     Wire.write(reg);
     Wire.endTransmission();
@@ -15,7 +15,7 @@ unsigned char SI1145_getRegister(unsigned char reg) {
     return Wire.read();
 }
 
-unsigned int SI1145_getRegister16(unsigned char reg) {
+unsigned int SI1145_getRegister16(byte reg) {
     Wire.beginTransmission(SI1145_ADDR);
     Wire.write(reg);
     Wire.endTransmission();
@@ -23,11 +23,11 @@ unsigned int SI1145_getRegister16(unsigned char reg) {
     return Wire.read() | (Wire.read() << 8);
 }
 
-void SI1145_sendCommand(unsigned char command) {
+void SI1145_sendCommand(byte command) {
     SI1145_setRegister(0x18, command);
 }
 
-void SI1145_setParameter(unsigned char par, unsigned char val) {
+void SI1145_setParameter(byte par, byte val) {
     SI1145_setRegister(0x17, val); // PARAM_WR
     SI1145_sendCommand(0b10100000 | par); // PARAM_SET with parameter
 }
@@ -35,7 +35,7 @@ void SI1145_setParameter(unsigned char par, unsigned char val) {
 int SI1145_init_sensor() {
     Wire.begin();
   
-    unsigned char id = SI1145_getRegister(0); // check ID, should be 0x45
+    byte id = SI1145_getRegister(0); // check ID, should be 0x45
     if (id != 0x45) return -1;
 
     SI1145_sendCommand(1); // reset

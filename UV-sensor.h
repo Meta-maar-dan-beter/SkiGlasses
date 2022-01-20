@@ -1,5 +1,12 @@
-#include <Wire.h>
 #define SI1145_ADDR 0x60
+#ifdef ARDUINO_AVR_UNO
+#include <Wire.h>
+#endif
+
+#ifdef ARDUINO_attiny
+#include <TinyWireM.h>
+#define Wire TinyWireM
+#endif
 
 typedef struct {
     unsigned int vis;

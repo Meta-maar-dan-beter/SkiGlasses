@@ -1,6 +1,11 @@
 #include <math.h>
 #include "UV-sensor.h"
 
+// Defs for Arduino UNO
+#ifdef ARDUINO_AVR_UNO
+
+#define DEBUG
+
 // Rotary Encoder Inputs
 #define CLK 2
 #define DT 3
@@ -8,6 +13,22 @@
 
 // PWM pin for output
 #define PWM 5
+
+#endif
+
+// Defs for ATtiny84
+#ifdef ARDUINO_attiny
+
+// Rotary Encoder Inputs
+#define CLK 8
+#define DT 2
+#define SW 3
+
+// PWM pin for output
+#define PWM 7
+
+#endif
+
 
 // Global variables
 int counter = 50;
@@ -25,7 +46,9 @@ void setup() {
   attachInterrupt(0, updateEncoder, FALLING);
 
   // Setup Serial Monitor
+#ifdef DEBUG
   Serial.begin(9600);
+#endif
 
   // Init UV sensor
   SI1145_init_sensor();
@@ -36,9 +59,7 @@ void setup() {
 // returns: value between 0 (fully tranparent) and 100 (fully opaque)
 int calc_shade(int solar, int manual) {
   double exponent = pow(5.0, 1.0 - manual / 50.0);
-  int ret = round(100.0 * pow(solar / 100.0, exponent));
-  if (ret == 0) ret = 1; // Make sure value never hits zero
-  return ret;
+  return (int)round(100.0 * pow(solar / 100.0, exponent));
 }
 
 // set timer 1 period in ms
@@ -53,7 +74,7 @@ void setInterrupt(int period) {
   // Set CS10 and CS12 bits for 1024 prescaler
   TCCR1B |= (1 << CS12) | (1 << CS10);  
   // set compare match register
-  OCR1A = period * 15.625 - 1;
+  OCR1A = period * 15.625; // 16 MHz / 1024 (prescaler) / 1000 (ms)
   // enable timer compare interrupt
   TIMSK1 |= (1 << OCIE1A);
 
@@ -83,12 +104,14 @@ void loop() {
     int value = calc_shade(solar.vis, counter); // use visual reading for testing, change to UV later
     if (power) setInterrupt(value);
 
+#ifdef DEBUG
     Serial.print("Solar: ");
     Serial.print(solar.vis);
     Serial.print(" | Counter: ");
     Serial.println(counter);
     Serial.print("Formula: ");
     Serial.println(value);
+#endif
 
     lastSensorRead = millis();
   }
@@ -103,7 +126,9 @@ void loop() {
     if (millis() - lastButtonPress > 50) {
       power = !power;
       if (!power) setInterrupt(100);
+#ifdef DEBUG
       Serial.println("Button pressed!");
+#endif
     }
 
     // Remember last button press event
