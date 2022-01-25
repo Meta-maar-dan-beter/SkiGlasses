@@ -59,7 +59,9 @@ void setup() {
 // returns: value between 0 (fully tranparent) and 100 (fully opaque)
 int calc_shade(int solar, int manual) {
   double exponent = pow(5.0, 1.0 - manual / 50.0);
-  return (int)round(100.0 * pow(solar / 100.0, exponent));
+   int ret = round(100.0 * pow(solar / 100.0, exponent));
+   if (ret < 1) ret = 1; // Make sure value never hits zero
+   return ret;
 }
 
 // set timer 1 period in ms
@@ -74,7 +76,7 @@ void setInterrupt(int period) {
   // Set CS10 and CS12 bits for 1024 prescaler
   TCCR1B |= (1 << CS12) | (1 << CS10);  
   // set compare match register
-  OCR1A = period * 15.625; // 16 MHz / 1024 (prescaler) / 1000 (ms)
+  OCR1A = period * (F_CPU / 1024000.0); // Clock freq / 1024 (prescaler) / 1000 (ms)
   // enable timer compare interrupt
   TIMSK1 |= (1 << OCIE1A);
 
@@ -82,11 +84,21 @@ void setInterrupt(int period) {
 
 }
 
+#ifdef ARDUINO_AVR_UNO
 ISR(TIMER1_COMPA_vect) {
   digitalWrite(PWM, HIGH);
   asm("nop\nnop\nnop\nnop\nnop\nnop\n"); // short delay
   digitalWrite(PWM, LOW);
 }
+#endif
+
+#ifdef ARDUINO_attiny
+ISR(TIM1_COMPA_vect) {
+  digitalWrite(PWM, HIGH);
+  asm("nop\nnop\nnop\n"); // short delay
+  digitalWrite(PWM, LOW);
+}
+#endif
 
 void updateEncoder() {
   int dat = digitalRead(DT);
